@@ -3,7 +3,7 @@
 	export let disabled = false;
 </script>
 
-<button {disabled} on:click> Update </button>
+<button {disabled} on:click> <slot /> </button>
 
 <style>
 	button {
@@ -18,6 +18,10 @@
 		padding: 8px 32px 8px 32px;
 		font-size: 120%;
 		margin: 0;
+	}
+
+	button[disabled] {
+		background-color: #888;
 	}
 
 	button:active {
