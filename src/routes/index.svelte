@@ -3,31 +3,46 @@
 </script>
 
 <script lang="ts">
-	import Button from '../components/Button.svelte';
-	import CodeEditor from '../components/CodeEditor.svelte';
+	import LoadingSpinner from '../components/LoadingSpinner.svelte';
+	import SourceManager from '../components/SourceManager.svelte';
+	import { onMount } from 'svelte';
 	import Separator from '../components/Separator.svelte';
-	import { compileTypeScript } from '../utils/ts-compiler';
 
-	let source: string | null = null;
-	let hasConfirmedSecurity = false;
-	let isCompiling = 0;
+	type Data = Readonly<{ source: string }>;
+	let data: Data | null = null;
+	let dataWriter: ((data: Data) => void) | null = null;
 
-	async function onUpdate() {
-		if (!hasConfirmedSecurity) confirm(`IMPORTANT: If you press OK, this code will be executed in your browser. It could possibly be malicious. Continue?`);
-		hasConfirmedSecurity = true;
-		if (!source) return alert(`Please enter some source code`);
+	type Settings = Readonly<{ autoFormat: boolean }>;
+	let settings: Settings | null = null;
+	let settingsWriter: ((settings: Settings) => void) | null = null;
 
-		isCompiling++;
-		try {
-			alert(JSON.stringify(await compileTypeScript(source!)));
-		} catch (e) {
-			alert(`An error occured! Check the console for more info.\n\n${e}: ${(e as any).message}`);
-			console.error(`Error updating source`, e);
-			throw e;
-		} finally {
-			isCompiling--;
-		}
-	}
+	onMount(() => {
+		const localStorageDataKey = '@n2d4/uncharted/v1/data';
+		const localStorageData = localStorage.getItem(localStorageDataKey);
+		data = JSON.parse(localStorage.getItem(localStorageDataKey) ?? `{}`);
+		data = {
+			source: `${data?.source ?? `(x: number, y: number) => {\n\tconst xSquared = x ** 2;\n\treturn xSquared - y;\n}`}`,
+		};
+		dataWriter = (data) => localStorage.setItem(localStorageDataKey, JSON.stringify(data));
+
+		// Make sure data isn't corrupt
+		data = {
+			source: `${data?.source}`,
+		};
+
+		const localStorageSettingsKey = '@n2d4/uncharted/v1/settings';
+		settings = JSON.parse(localStorage.getItem(localStorageSettingsKey) ?? `{}`);
+		settings = {
+			autoFormat: !!(settings?.autoFormat ?? true),
+		};
+		settingsWriter = (settings) =>
+			localStorage.setItem(localStorageSettingsKey, JSON.stringify(settings));
+
+		// Make sure settings aren't corrupt
+	});
+
+	$: data && dataWriter && dataWriter(data);
+	$: settings && settingsWriter && settingsWriter(settings);
 </script>
 
 <svelte:head>
@@ -36,19 +51,27 @@
 
 <h1>Uncharted</h1>
 
-<CodeEditor bind:value={source} />
+{#if data && settings}
+	<SourceManager
+		initialSource={data.source}
+		on:saveSource={(event) => (data = { ...data, source: event.detail })}
+		on:sourceUpdate={(event) => alert(JSON.stringify(event.detail))}
+		autoFormat={settings.autoFormat}
+		on:changeAutoFormat={(event) => (settings = { ...settings, autoFormat: event.detail })}
+	/>
 
-<Button disabled={isCompiling > 0 || !source} on:click={onUpdate}>
-	Update
-</Button>
+	<Separator />
 
-<Separator />
+	<h2>Parameters</h2>
 
-<h2>Parameters</h2>
+	<Separator />
 
-<Separator />
-
-<h2>Result</h2>
+	<h2>Result</h2>
+{:else}
+	<div class="loading-container">
+		<LoadingSpinner fadeInAfter={250} />
+	</div>
+{/if}
 
 <style>
 	h1 {
@@ -58,5 +81,11 @@
 	h2 {
 		align-self: center;
 		margin: 0;
+	}
+
+	.loading-container {
+		align-self: center;
+		margin-top: 12px;
+		margin-bottom: 32px;
 	}
 </style>

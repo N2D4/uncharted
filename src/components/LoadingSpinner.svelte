@@ -1,31 +1,44 @@
 <!-- Gracefully taken from https://loading.io/css/ (CC0) -->
-
 <script lang="ts">
-    export let text = "Loading...";
+	import { onMount } from 'svelte';
+
+	export let text = '';
+	export let fadeInAfter: number | null = null;
+
+	let visible = fadeInAfter === null;
+	onMount(() => {
+		if (fadeInAfter !== null) setTimeout(() => (visible = true), fadeInAfter);
+	});
 </script>
 
-<div class="cont">
-    <div class="lds-grid">
-        <div />
-        <div />
-        <div />
-        <div />
-        <div />
-        <div />
-        <div />
-        <div />
-        <div />
-    </div>
-    {text}
+<div class="cont" class:visible>
+	<div class="lds-grid">
+		<div />
+		<div />
+		<div />
+		<div />
+		<div />
+		<div />
+		<div />
+		<div />
+		<div />
+	</div>
+	{text}
 </div>
 
 <style>
-    .cont {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-    }
+	.cont {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		opacity: 0;
+		transition: 0.5s opacity;
+	}
+
+	.cont.visible {
+		opacity: 1;
+	}
 
 	.lds-grid {
 		display: inline-block;
