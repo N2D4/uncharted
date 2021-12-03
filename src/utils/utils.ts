@@ -1,6 +1,7 @@
-export function throwErr(err: string | Error): never {
-    if (typeof err === 'string') {
-        err = new Error(err);
-    }
-    throw err;
+export function throwErr(err: string | Error, ...args: unknown[]): never {
+	if (typeof err === 'string') {
+		err = new Error(err);
+	}
+	console.error(err, args);
+	throw err;
 }

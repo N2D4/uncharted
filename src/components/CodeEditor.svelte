@@ -1,10 +1,11 @@
 <script lang="ts">
 	import type monaco from 'monaco-editor';
 	import { createEventDispatcher, onMount } from 'svelte';
+	import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 	import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
 	import LoadingSpinner from './LoadingSpinner.svelte';
 
-	let initialValue = "";
+	let initialValue = '';
 	let initialCursor = 0;
 	const dispatch = createEventDispatcher();
 
@@ -18,15 +19,20 @@
 
 		// Create the editor
 		(globalThis as any).MonacoEnvironment = {
-			getWorker: () => new tsWorker()
+			getWorker: (_: any, label: string) => {
+				if (label === 'typescript' || label === 'javascript') {
+					return new tsWorker();
+				}
+				return new editorWorker();
+			}
 		};
 		const editor = monaco.editor.create(divEl, {
 			value: initialValue,
-			language: 'typescript',
+			language: 'typescript'
 		});
 		editor.setPosition(editor.getModel()!.getPositionAt(initialCursor));
 		editor.onDidChangeModelContent(() => dispatch('change'));
-		editor.onDidChangeCursorPosition(e => dispatch('changeCursor'));
+		editor.onDidChangeCursorPosition((e) => dispatch('changeCursor'));
 		monacoEditor = editor;
 		new ResizeObserver(() => editor.layout()).observe(divEl);
 
@@ -63,11 +69,7 @@
 	}
 </script>
 
-<div
-	bind:this={divEl}
-	on:keydown={onKeyDown}
-	class="editor"
->
+<div bind:this={divEl} on:keydown={onKeyDown} class="editor">
 	<LoadingSpinner />
 </div>
 

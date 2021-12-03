@@ -13,14 +13,17 @@
 
 	export let initialSource: string;
 	export let autoFormat: boolean;
+	export let disableSecurityConfirmation = false;
 
 	let editor: CodeEditor | undefined;
 	$: editor && editor.setValue(initialSource);
 
+	let lastError: ["err", unknown] | null = null;
+
 	const instanceId = instanceCount++;
 	const dispatch = createEventDispatcher();
 
-	let hasConfirmedSecurity = false;
+	let hasConfirmedSecurity = disableSecurityConfirmation;
 	let isCompiling = 0;
 
 	function getSource() {
@@ -45,6 +48,8 @@
 		// Wait a little until reporting back for UX reasons (to let the user know something happened)
 		const wait = new Promise(resolve => setTimeout(resolve, 250));
 
+		lastError = null;
+
 		if (autoFormat) onFormat();
 
 		const storedSource = getSource();
@@ -54,7 +59,8 @@
 			await wait;
 			dispatch('sourceUpdate', result);
 		} catch (e) {
-			alert(`An error occured! Check the console for more info.\n\n${e}: ${(e as any).message}`);
+			lastError = ["err", e];
+			alert(`An error occured! Check the console for more info.\n\n${e}`);
 			console.error(`Error updating source`, e);
 			throw e;
 		} finally {
@@ -71,7 +77,7 @@
 				printWidth: 120,
 				tabWidth: 4,
 			});
-		const formatted = prettied.formatted.replace(/;\n$/gm, '\n');
+		const formatted = prettied.formatted.replace(/;\s+$/gm, '\n');
 
 		if (editor) {
 			// If the editor is already available, keep cursor info
@@ -83,6 +89,12 @@
 </script>
 
 <CodeEditor bind:this={editor} on:save={onUpdate} />
+
+{#if lastError}
+	<div class="error">
+		{`${lastError[1]}`}
+	</div>
+{/if}
 
 <div class="buttons">
 	<div>
@@ -104,5 +116,11 @@
 		justify-content: flex-end;
 		align-items: center;
 		gap: 12px;
+	}
+
+	.error {
+		color: red;
+		font-size: 75%;
+		align-self: center;
 	}
 </style>
