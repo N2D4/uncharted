@@ -16,7 +16,6 @@
 	export let disableSecurityConfirmation = false;
 
 	let editor: CodeEditor | undefined;
-	$: editor && editor.setValue(initialSource);
 
 	let lastError: ["err", unknown] | null = null;
 
@@ -74,7 +73,7 @@
 				parser: 'typescript',
 				plugins: [parserTypeScript],
 				cursorOffset: editor?.getCursor() ?? 0,
-				printWidth: 120,
+				printWidth: 100,
 				tabWidth: 4,
 			});
 		const formatted = prettied.formatted.replace(/;\s+$/gm, '\n');
@@ -88,7 +87,7 @@
 	}
 </script>
 
-<CodeEditor bind:this={editor} on:save={onUpdate} />
+<CodeEditor initialValue={initialSource} bind:this={editor} on:save={onUpdate} />
 
 {#if lastError}
 	<div class="error">
@@ -120,7 +119,7 @@
 
 	.error {
 		color: red;
-		font-size: 75%;
+		font-size: 90%;
 		align-self: center;
 	}
 </style>

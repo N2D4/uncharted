@@ -7,23 +7,68 @@
 	import SourceManager from '../components/SourceManager.svelte';
 	import { onMount } from 'svelte';
 	import Separator from '../components/Separator.svelte';
-import type { EvalResult } from 'src/utils/ts-compiler';
+	import type { EvalResult } from '../utils/ts-compiler';
+	import ParameterEditor from '../components/ParameterEditor.svelte';
+	import { getDefaultValue, Parameter, ParameterValue } from '../utils/parameters';
+	import { throwErr } from '../utils/utils';
 
-	type Data = Readonly<{ source: string }>;
+	type Data = Readonly<{ source: string; parameterValues: Record<string, ParameterValue> }>;
 	let data: Data | null = null;
 	let dataWriter: ((data: Data) => void) | null = null;
+	$: data && dataWriter && dataWriter(data);
 
-	type Settings = Readonly<{ autoFormat: boolean, disableSecurityConfirmation: boolean }>;
+	type Settings = Readonly<{ autoFormat: boolean; disableSecurityConfirmation: boolean }>;
 	let settings: Settings | null = null;
 	let settingsWriter: ((settings: Settings) => void) | null = null;
+	$: settings && settingsWriter && settingsWriter(settings);
 
 	let evalResult: EvalResult | null = null;
+	function onSourceSaved(newEvalResult: EvalResult) {
+		evalResult = newEvalResult;
 
+		if (!data)
+			throwErr(`Data must be initialized before saving the source! (How did this happen?)`);
+
+		const parameterValues = Object.create(null);
+		for (const parameter of evalResult.results) {
+			parameterValues[parameter.name] =
+				data?.parameterValues[parameter.name] ?? getDefaultValue(parameter);
+		}
+
+		data = { ...data, parameterValues };
+	}
+
+	function getParameterValues(data: Data, evalResult: EvalResult) {
+		return new Map(
+			evalResult.parameters.map((parameter) => {
+				const value = data.parameterValues[parameter.name] ?? getDefaultValue(parameter);
+				return [parameter, value];
+			})
+		);
+	}
+
+	function updateParameterValue(data: Data, parameter: Parameter, value: ParameterValue) {
+		return { ...data, parameterValues: { ...data.parameterValues, [parameter.name]: value } };
+	}
+
+	// Read data & storage
 	onMount(() => {
 		const localStorageDataKey = '@n2d4/uncharted/v1/data';
 		data = JSON.parse(localStorage.getItem(localStorageDataKey) ?? `{}`);
 		data = {
-			source: `${data?.source ?? `(x: number, y: number) => {\n\tconst xSquared = x ** 2;\n\treturn { myResult: xSquared - y };\n}`}`,
+			source: `${
+				data?.source ??
+				`
+(x: number, y: number, z: string) => {
+    const xSquared = x ** 2;
+    return {
+        xSquaredHalf: xSquared / 2,
+        complicatedCalculation: xSquared - y * z.length,
+    };
+}
+			`.trim()
+			}`,
+			parameterValues: Object.assign(Object.create(null), data?.parameterValues ?? {})
 		};
 		dataWriter = (data) => localStorage.setItem(localStorageDataKey, JSON.stringify(data));
 
@@ -31,17 +76,16 @@ import type { EvalResult } from 'src/utils/ts-compiler';
 		settings = JSON.parse(localStorage.getItem(localStorageSettingsKey) ?? `{}`);
 		settings = {
 			autoFormat: !!(settings?.autoFormat ?? true),
-			disableSecurityConfirmation: !!settings?.disableSecurityConfirmation,
+			disableSecurityConfirmation: !!settings?.disableSecurityConfirmation
 		};
 		settingsWriter = (settings) =>
 			localStorage.setItem(localStorageSettingsKey, JSON.stringify(settings));
 	});
 
-	$: data && dataWriter && dataWriter(data);
-	$: settings && settingsWriter && settingsWriter(settings);
-
+	// Aid debugging
 	(globalThis as any)[`@n2d4/uncharted`] = {
-		disableSecurityConfirmation: () => settings &&= {...settings, disableSecurityConfirmation: true},
+		disableSecurityConfirmation: () =>
+			(settings &&= { ...settings, disableSecurityConfirmation: true })
 	};
 </script>
 
@@ -55,7 +99,7 @@ import type { EvalResult } from 'src/utils/ts-compiler';
 	<SourceManager
 		initialSource={data.source}
 		on:saveSource={(event) => (data &&= { ...data, source: event.detail })}
-		on:sourceUpdate={(event) => console.log(evalResult = event.detail)}
+		on:sourceUpdate={(event) => onSourceSaved(event.detail)}
 		autoFormat={settings.autoFormat}
 		on:changeAutoFormat={(event) => (settings &&= { ...settings, autoFormat: event.detail })}
 		disableSecurityConfirmation={settings.disableSecurityConfirmation}
@@ -65,6 +109,11 @@ import type { EvalResult } from 'src/utils/ts-compiler';
 		<Separator />
 
 		<h2>Parameters</h2>
+
+		<ParameterEditor
+			parameters={getParameterValues(data, evalResult)}
+			on:changeParameter={(e) => (data &&= updateParameterValue(data, e.detail[0], e.detail[1]))}
+		/>
 
 		<Separator />
 

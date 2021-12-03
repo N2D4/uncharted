@@ -1,15 +1,13 @@
 import * as ts from 'typescript';
+import type { Parameter } from './parameters';
+import type { Result } from './results';
 import { throwErr } from './utils';
-
-export type Parameter = readonly ['number'] | readonly ['string'];
-
-export type Result = Map<string, ['number']>;
 
 export type EvalResult = {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	function: (...args: any[]) => Record<string, number>;
 	parameters: Parameter[];
-	result: Result;
+	results: Result[];
 };
 
 export async function evalTypeScript(source: string): Promise<EvalResult> {
@@ -48,26 +46,24 @@ export async function evalTypeScript(source: string): Promise<EvalResult> {
 	const transpiledJS = await new Promise<string>((resolve) =>
 		program.emit(rootFile, (_, data) => resolve(data))
 	);
+
 	const functionType = typechecker.getTypeAtLocation(expression);
 	const callSignatures = functionType.getCallSignatures();
 	if (callSignatures.length !== 1) {
 		throwErr('Expression must be a function with exactly one call signature!');
 	}
-	const returnType = callSignatures[0].getReturnType();
-	const functionParameters = callSignatures[0].getParameters();
-	console.log({ expression, callSignatures, functionParameters, returnType });
 
-	const parameters = functionParameters.map((parameter) => {
+	const functionParameters = callSignatures[0].getParameters();
+	const parameters: Parameter[] = functionParameters.map((parameter) => {
 		const parameterType = typechecker.getTypeOfSymbolAtLocation(parameter, expression);
-		console.log({ parameter, parameterType });
 
 		switch (parameterType.getFlags()) {
 			// we don't check for inheritance (using &) as we want types to be exact
 			case ts.TypeFlags.Number: {
-				return ['number'] as const;
+				return { name: parameter.name, type: ['number'] };
 			}
 			case ts.TypeFlags.String: {
-				return ['string'] as const;
+				return { name: parameter.name, type: ['string'] };
 			}
 		}
 
@@ -76,13 +72,31 @@ export async function evalTypeScript(source: string): Promise<EvalResult> {
 			parameterType
 		});
 	});
-	const result = new Map();
+
+	const returnType = callSignatures[0].getReturnType();
+	if (returnType.getFlags() !== ts.TypeFlags.Object) {
+		throwErr(`Return type must be a plain object!`, { returnType });
+	}
+	const functionResults = returnType.getProperties();
+	const results: Result[] = functionResults.map((result) => {
+		const resultType = typechecker.getTypeOfSymbolAtLocation(result, expression);
+
+		// in results, we also accept inherited/number-like types
+		if (resultType.getFlags() & ts.TypeFlags.NumberLike) {
+			return { name: result.name, type: ['number'] };
+		}
+
+		throwErr(`Type of result variable ${result.getName()} must be number!`, {
+			result,
+			resultType
+		});
+	});
 
 	const evaluatedFunction = (() => eval(transpiledJS))();
 
 	return {
 		function: evaluatedFunction,
 		parameters,
-		result
+		results
 	};
 }

@@ -5,7 +5,7 @@
 	import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
 	import LoadingSpinner from './LoadingSpinner.svelte';
 
-	let initialValue = '';
+	export let initialValue = '';
 	let initialCursor = 0;
 	const dispatch = createEventDispatcher();
 
@@ -76,7 +76,7 @@
 <style>
 	.editor {
 		align-self: stretch;
-		flex: 1 1 400px;
+		min-height: 400px;
 		resize: vertical;
 		box-sizing: border-box;
 		overflow: hidden;
