@@ -30,7 +30,7 @@
 			throwErr(`Data must be initialized before saving the source! (How did this happen?)`);
 
 		const parameterValues = Object.create(null);
-		for (const parameter of evalResult.results) {
+		for (const parameter of evalResult.parameters) {
 			parameterValues[parameter.name] =
 				data?.parameterValues[parameter.name] ?? getDefaultValue(parameter);
 		}
@@ -48,6 +48,7 @@
 	}
 
 	function updateParameterValue(data: Data, parameter: Parameter, value: ParameterValue) {
+		console.log(`Updating parameter ${parameter.name} to ${JSON.stringify(value)}`);
 		return { ...data, parameterValues: { ...data.parameterValues, [parameter.name]: value } };
 	}
 
@@ -112,7 +113,7 @@
 
 		<ParameterEditor
 			parameters={getParameterValues(data, evalResult)}
-			on:changeParameter={(e) => (data &&= updateParameterValue(data, e.detail[0], e.detail[1]))}
+			on:change={(e) => (data &&= updateParameterValue(data, e.detail[0], e.detail[1]))}
 		/>
 
 		<Separator />

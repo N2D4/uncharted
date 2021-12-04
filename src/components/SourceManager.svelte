@@ -7,7 +7,6 @@
 	import Button from '../components/Button.svelte';
 	import CodeEditor from '../components/CodeEditor.svelte';
 	import { evalTypeScript } from '../utils/ts-compiler';
-	// @ts-ignore
 	import prettier from 'prettier/standalone';
 	import parserTypeScript from 'prettier/parser-typescript';
 
@@ -99,11 +98,11 @@
 	<div>
 		<input
 			type="checkbox"
-			id={`n2d4-sourcemanager-${instanceId}-checkbox`}
+			id={`n2d4-uncharted-sourcemanager-${instanceId}-checkbox`}
 			bind:checked={autoFormat}
 			on:change={(e) => dispatch('changeAutoFormat', e.currentTarget.checked)}
 		/>
-		<label for={`n2d4-sourcemanager-${instanceId}-checkbox`}>Auto-format</label>
+		<label for={`n2d4-uncharted-sourcemanager-${instanceId}-checkbox`}>Auto-format</label>
 	</div>
 	<Button on:click={onFormat}>Format</Button>
 	<Button primary disabled={isCompiling > 0} on:click={onUpdate}>Save</Button>
