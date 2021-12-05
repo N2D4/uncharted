@@ -1,7 +1,3 @@
-<script context="module">
-	let instanceCount = 0;
-</script>
-
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import Button from '../components/Button.svelte';
@@ -9,6 +5,7 @@
 	import { evalTypeScript } from '../utils/ts-compiler';
 	import prettier from 'prettier/standalone';
 	import parserTypeScript from 'prettier/parser-typescript';
+	import { v4 as uuidv4 } from 'uuid';
 
 	export let initialSource: string;
 	export let autoFormat: boolean;
@@ -18,7 +15,7 @@
 
 	let lastError: ["err", unknown] | null = null;
 
-	const instanceId = instanceCount++;
+	const inputId = uuidv4();
 	const dispatch = createEventDispatcher();
 
 	let hasConfirmedSecurity = disableSecurityConfirmation;
@@ -98,11 +95,11 @@
 	<div>
 		<input
 			type="checkbox"
-			id={`n2d4-uncharted-sourcemanager-${instanceId}-checkbox`}
+			id={inputId}
 			bind:checked={autoFormat}
 			on:change={(e) => dispatch('changeAutoFormat', e.currentTarget.checked)}
 		/>
-		<label for={`n2d4-uncharted-sourcemanager-${instanceId}-checkbox`}>Auto-format</label>
+		<label for={inputId}>Auto-format</label>
 	</div>
 	<Button on:click={onFormat}>Format</Button>
 	<Button primary disabled={isCompiling > 0} on:click={onUpdate}>Save</Button>

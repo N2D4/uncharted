@@ -8,23 +8,32 @@
 	const dispatch = createEventDispatcher();
 </script>
 
-{#each [...parameters] as parameter}
-	{#if parameter[0].type[0] === 'number'}
-		<NumberParameter
-			parameter={parameter[0]}
-			initialValue={parameter[1]}
-			on:change={(e) => dispatch('change', [parameter[0], e.detail])}
-		/>
-	{:else}
-		<div class="error">
-			ERROR: Unknown parameter type for {parameter[0].name}: {JSON.stringify(parameter[0].type)}
-		</div>
-	{/if}
-{/each}
+<div class="grid">
+	{#each [...parameters] as parameter}
+		{#if parameter[0].type[0] === 'number'}
+			<NumberParameter
+				parameter={parameter[0]}
+				initialValue={parameter[1]}
+				on:change={(e) => dispatch('change', [parameter[0], e.detail])}
+			/>
+		{:else}
+			<div class="error">
+				ERROR: Unknown parameter type for {parameter[0].name}: {JSON.stringify(parameter[0].type)}
+			</div>
+		{/if}
+	{/each}
+</div>
 
 <style>
-    .error {
-        color: red;
-        font-weight: bold;
-    }
+	.grid {
+		display: grid;
+		grid-template-columns: min-content auto;
+		gap: 8px;
+	}
+
+	.error {
+		color: red;
+		font-weight: bold;
+		grid-column: 1 / span 2;
+	}
 </style>
