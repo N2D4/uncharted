@@ -6,6 +6,15 @@
 	import prettier from 'prettier/standalone';
 	import parserTypeScript from 'prettier/parser-typescript';
 	import { v4 as uuidv4 } from 'uuid';
+	import * as ts from 'typescript';
+
+	const compilerOptions: ts.CompilerOptions = {
+		module: ts.ModuleKind.CommonJS,
+		target: ts.ScriptTarget.ES5,
+		strict: true,
+		noEmitOnError: true,
+		noImplicitAny: true,
+	};
 
 	export let initialSource: string;
 	export let autoFormat: boolean;
@@ -50,12 +59,12 @@
 		const storedSource = getSource();
 		isCompiling++;
 		try {
-			const result = await evalTypeScript(storedSource);
+			const result = await evalTypeScript(storedSource, compilerOptions);
 			await wait;
 			dispatch('sourceUpdate', result);
 		} catch (e) {
 			lastError = ["err", e];
-			alert(`An error occured! Check the console for more info.\n\n${e}`);
+			alert(`An error occured during evaluation! Check the console for more info.\n\n${e}`);
 			console.error(`Error updating source`, e);
 			throw e;
 		} finally {
@@ -64,26 +73,34 @@
 	}
 
 	function onFormat() {
-		const prettied = prettier
-			.formatWithCursor(getSource(), {
-				parser: 'typescript',
-				plugins: [parserTypeScript],
-				cursorOffset: editor?.getCursor() ?? 0,
-				printWidth: 100,
-				tabWidth: 4,
-			});
-		const formatted = prettied.formatted.replace(/;\s+$/gm, '\n');
+		try {
+			const prettied = prettier
+				.formatWithCursor(getSource(), {
+					parser: 'typescript',
+					plugins: [parserTypeScript],
+					cursorOffset: editor?.getCursor() ?? 0,
+					printWidth: 100,
+					tabWidth: 4,
+				});
 
-		if (editor) {
-			// If the editor is already available, keep cursor info
-			editor.setValue(formatted, prettied.cursorOffset);
-		} else {
-			initialSource = prettied.formatted;
+				const formatted = prettied.formatted.replace(/;\s+$/gm, '\n');
+
+				if (editor) {
+					// If the editor is already available, keep cursor info
+					editor.setValue(formatted, prettied.cursorOffset);
+				} else {
+					initialSource = prettied.formatted;
+				}
+		} catch (e) {
+			lastError = ["err", e];
+			alert(`An error occured during formatting! Check the console for more info.\n\n${e}`);
+			console.error(`Error formatting source`, e);
+			throw e;
 		}
 	}
 </script>
 
-<CodeEditor initialValue={initialSource} bind:this={editor} on:save={onUpdate} />
+<CodeEditor initialValue={initialSource} {compilerOptions} bind:this={editor} on:save={onUpdate} />
 
 {#if lastError}
 	<div class="error">
@@ -117,5 +134,6 @@
 		color: red;
 		font-size: 90%;
 		align-self: center;
+		white-space: pre-wrap;
 	}
 </style>

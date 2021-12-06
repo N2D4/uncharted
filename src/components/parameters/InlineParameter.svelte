@@ -1,5 +1,6 @@
 <script lang="ts">
-	import type { Parameter } from "src/utils/parameters";
+	import type { Parameter } from "../../utils/parameters";
+	import { getHumanReadableName } from "../../utils/utils";
 
 
 	export let inputId: string | undefined = undefined;
@@ -7,7 +8,7 @@
 </script>
 
 
-<label for={inputId}>{parameter.name}</label>
+<label for={inputId}>{getHumanReadableName(parameter.name)}</label>
 <div>
 	<slot />
 </div>

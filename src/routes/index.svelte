@@ -48,7 +48,6 @@
 	}
 
 	function updateParameterValue(data: Data, parameter: Parameter, value: ParameterValue) {
-		console.log(`Updating parameter ${parameter.name} to ${JSON.stringify(value)}`);
 		return { ...data, parameterValues: { ...data.parameterValues, [parameter.name]: value } };
 	}
 

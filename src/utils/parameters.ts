@@ -1,5 +1,3 @@
-import { throwErr } from './utils';
-
 export type Parameter = { name: string; type: readonly ['number'] | readonly ['string'] };
 
 export type ParameterValue =
@@ -15,8 +13,4 @@ export function getDefaultValue(parameter: Parameter): ParameterValue {
 			return ['literal', ''];
 		}
 	}
-
-	throwErr(
-		`Can't find default value for type of ${parameter.name}: ${JSON.stringify(parameter.type)}`
-	);
 }

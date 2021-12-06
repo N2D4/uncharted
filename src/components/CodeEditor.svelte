@@ -4,8 +4,11 @@
 	import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 	import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
 	import LoadingSpinner from './LoadingSpinner.svelte';
+	import type ts from 'typescript';
 
 	export let initialValue = '';
+	export let compilerOptions: ts.CompilerOptions;
+
 	let initialCursor = 0;
 	const dispatch = createEventDispatcher();
 
@@ -26,6 +29,10 @@
 				return new editorWorker();
 			}
 		};
+		monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+			allowNonTsExtensions: true,
+			...compilerOptions as any
+		});
 		const editor = monaco.editor.create(divEl, {
 			value: initialValue,
 			language: 'typescript'
