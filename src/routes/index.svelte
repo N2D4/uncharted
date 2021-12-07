@@ -10,7 +10,7 @@
 	import type { EvalResult } from '../utils/ts-compiler';
 	import ParameterEditor from '../components/ParameterEditor.svelte';
 	import { getDefaultValue, Parameter, ParameterValue } from '../utils/parameters';
-	import { throwErr } from '../utils/utils';
+	import { getHumanReadableName, throwErr } from '../utils/utils';
 
 	type Data = Readonly<{ source: string; parameterValues: Record<string, ParameterValue> }>;
 	let data: Data | null = null;
@@ -118,6 +118,13 @@
 		<Separator />
 
 		<h2>Result</h2>
+
+		{#each evalResult.results as result}
+			<div>
+				<h3>{getHumanReadableName(result.name)}</h3>
+				<pre>{JSON.stringify(result)}</pre>
+			</div>
+		{/each}
 	{/if}
 {:else}
 	<div class="loading-container">

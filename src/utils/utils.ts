@@ -16,6 +16,6 @@ export function getHumanReadableName(identifier: string): string {
 	name = name.replace(/_/g, '');
 	name = name.replace(/(.)([0-9])/g, '$1 $2');
 	name = name.replace(/([A-Z])([A-Z][a-z])/g, '$1 $2');
-	name = name.replace(/([a-z0-9])([A-Z])/g, ' $1');
+	name = name.replace(/([a-z0-9])([A-Z])/g, '$1 $2');
 	return name;
 }
