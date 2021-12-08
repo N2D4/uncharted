@@ -4,27 +4,29 @@
 	import type { EvalFunction } from '../../utils/ts-compiler';
 	import ChartCanvas from '../ChartCanvas.svelte';
 	import { getHumanReadableName, throwErr } from '../../utils/utils';
-import { stringify } from 'uuid';
 
 	export let results: Result[];
 	export let parameters: Map<Parameter, ParameterValue>;
 	export let func: EvalFunction;
 
-	let data: {
-		error: null,
-		parameter: Parameter;
-		data: [number, Map<string, number>][];
-	} | {
-		error: string,
-	} = {
-		error: "Chart initialization error",
+	let data:
+		| {
+				error: null;
+				parameter: Parameter;
+				data: [number, Map<string, number>][];
+		  }
+		| {
+				error: string;
+		  } = {
+		error: 'Chart initialization error'
 	};
 	$: data = (() => {
 		// Headers
 		const computeParameters = [...parameters].flatMap(([param, value]) =>
 			value[0] !== 'number-range' ? [] : ([[param, value]] as const)
 		);
-		if (computeParameters.length !== 1) return { error: `Exactly one numeric parameter must be set to range mode` };
+		if (computeParameters.length !== 1)
+			return { error: `Exactly one parameter must be set to range mode` };
 		const computeParameter = computeParameters[0][0];
 
 		const range = [computeParameters[0][1][1], computeParameters[0][1][2]];
@@ -52,11 +54,15 @@ import { stringify } from 'uuid';
 
 			try {
 				const resultRecord = func(...args);
-				data.push([paramVal, new Map(results.map(r => [r.name, resultRecord?.[r.name] ?? null]))]);
+				data.push([
+					paramVal,
+					new Map(
+						results.map((r) => [getHumanReadableName(r.name), resultRecord?.[r.name] ?? null])
+					)
+				]);
 			} catch (e) {
 				console.error(`Error evaluating chart data`, { parameters, error: e, func });
 			}
-
 		}
 
 		return { error: null, parameter: computeParameter, data };
@@ -66,10 +72,7 @@ import { stringify } from 'uuid';
 {#if data.error !== null}
 	<div class="error">ERROR: {data.error}</div>
 {:else}
-	<ChartCanvas
-		data={data.data}
-		xTitle={getHumanReadableName(data.parameter.name)}
-	/>
+	<ChartCanvas data={data.data} xTitle={getHumanReadableName(data.parameter.name)} />
 {/if}
 
 <style>

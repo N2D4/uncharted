@@ -31,7 +31,7 @@
 	let evalResult: EvalResult | null = null;
 	function onSourceSaved(newEvalResult: EvalResult) {
 		evalResult = newEvalResult;
-		console.log({evalResult});
+		console.log({ evalResult });
 
 		if (!data)
 			throwErr(`Data must be initialized before saving the source! (How did this happen?)`);
@@ -105,24 +105,31 @@
 	{#if evalResult}
 		<Separator />
 
-		<h2>Parameters</h2>
+		<div class="section-container all-sections">
+			<div class="section-container parameters-section">
+				<h2>Parameters</h2>
 
-		<ParameterEditor
-			parameters={getParameterValues(data, evalResult)}
-			on:change={(e) => (data &&= updateParameterValue(data, e.detail[0], e.detail[1]))}
-		/>
+				<ParameterEditor
+					parameters={getParameterValues(data, evalResult)}
+					on:change={(e) => (data &&= updateParameterValue(data, e.detail[0], e.detail[1]))}
+				/>
+			</div>
 
-		<Separator />
+			<Separator />
 
-		<h2>Result</h2>
+			<div class="section-container results-section">
 
-		<ResultViewer
-			results={evalResult.results}
-			parameters={getParameterValues(data, evalResult)}
-			resultViewer={data.selectedResultViewer}
-			func={evalResult.function}
-			on:changeResultViewer={(e) => (data &&= { ...data, selectedResultViewer: e.detail })}
-		/>
+				<h2>Result</h2>
+
+				<ResultViewer
+					results={evalResult.results}
+					parameters={getParameterValues(data, evalResult)}
+					resultViewer={data.selectedResultViewer}
+					func={evalResult.function}
+					on:changeResultViewer={(e) => (data &&= { ...data, selectedResultViewer: e.detail })}
+				/>
+			</div>
+		</div>
 	{/if}
 {:else}
 	<div class="loading-container">
@@ -145,5 +152,21 @@
 		align-self: center;
 		margin-top: 12px;
 		margin-bottom: 32px;
+	}
+
+	.section-container {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	@media only screen and (min-width: 1000px) {
+		.results-section {
+			flex: 1 1 0;
+		}
+		
+		.all-sections {
+			flex-direction: row;
+		}
 	}
 </style>

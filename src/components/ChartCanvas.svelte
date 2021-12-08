@@ -7,7 +7,7 @@
 		'red',
 		'blue',
 		'green',
-		'yellow',
+		// 'yellow', // yellow doesn't work well with the background
 		'orange',
 		'purple',
 		'brown',
@@ -60,13 +60,31 @@
 					y: {
 						beginAtZero: true
 					}
-				}
-			}
+				},
+				maintainAspectRatio: false,
+			},
 		});
 	});
 </script>
 
-<canvas bind:this={canvas} />
+<div class="cont">
+	<div class="canvas-container">
+		<canvas bind:this={canvas} />
+	</div>
+</div>
 
 <style>
+	.cont {
+		position: relative;
+		padding-bottom: calc(min(75%, 80vh));
+		box-sizing: border-box;
+	}
+
+	.canvas-container {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+	}
 </style>
