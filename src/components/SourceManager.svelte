@@ -11,9 +11,10 @@
 	const compilerOptions: ts.CompilerOptions = {
 		module: ts.ModuleKind.CommonJS,
 		target: ts.ScriptTarget.ES5,
+		lib: ['es2020', 'dom'],
 		strict: true,
 		noEmitOnError: true,
-		noImplicitAny: true,
+		noImplicitAny: true
 	};
 
 	export let initialSource: string;
@@ -22,7 +23,7 @@
 
 	let editor: CodeEditor | undefined;
 
-	let lastError: ["err", unknown] | null = null;
+	let lastError: ['err', unknown] | null = null;
 
 	const inputId = uuidv4();
 	const dispatch = createEventDispatcher();
@@ -50,8 +51,8 @@
 		hasConfirmedSecurity = true;
 
 		// Wait a little until reporting back for UX reasons (to let the user know something happened)
-		const wait = new Promise(resolve => setTimeout(resolve, 250));
-	
+		const wait = new Promise((resolve) => setTimeout(resolve, 250));
+
 		isCompiling++;
 		try {
 			// Let the UI do its stuff (most notably greying out the Save button) before doing heavy blocking work
@@ -67,7 +68,7 @@
 				await wait;
 				dispatch('sourceUpdate', result);
 			} catch (e) {
-				lastError = ["err", e];
+				lastError = ['err', e];
 				alert(`An error occured during evaluation! Check the console for more info.\n\n${e}`);
 				console.error(`Error updating source`, e);
 				throw e;
@@ -79,25 +80,24 @@
 
 	function onFormat() {
 		try {
-			const prettied = prettier
-				.formatWithCursor(getSource(), {
-					parser: 'typescript',
-					plugins: [parserTypeScript],
-					cursorOffset: editor?.getCursor() ?? 0,
-					printWidth: 100,
-					tabWidth: 4,
-				});
+			const prettied = prettier.formatWithCursor(getSource(), {
+				parser: 'typescript',
+				plugins: [parserTypeScript],
+				cursorOffset: editor?.getCursor() ?? 0,
+				printWidth: 100,
+				tabWidth: 4
+			});
 
-				const formatted = prettied.formatted.replace(/;\s+$/gm, '\n');
+			const formatted = prettied.formatted.replace(/;\s+$/gm, '\n');
 
-				if (editor) {
-					// If the editor is already available, keep cursor info
-					editor.setValue(formatted, prettied.cursorOffset);
-				} else {
-					initialSource = prettied.formatted;
-				}
+			if (editor) {
+				// If the editor is already available, keep cursor info
+				editor.setValue(formatted, prettied.cursorOffset);
+			} else {
+				initialSource = prettied.formatted;
+			}
 		} catch (e) {
-			lastError = ["err", e];
+			lastError = ['err', e];
 			alert(`An error occured during formatting! Check the console for more info.\n\n${e}`);
 			console.error(`Error formatting source`, e);
 			throw e;

@@ -22,13 +22,21 @@ export async function evalTypeScript(
 	const rootFileName = '/main.ts';
 	const files = await createDefaultMapFromCDN(compilerOptions, ts.version, true, ts, lzstring);
 	files.set(rootFileName, source);
-	const vfs = createVirtualCompilerHost(createSystem(files), compilerOptions, ts).compilerHost;
+	const vfs = createVirtualCompilerHost(createSystem(files), compilerOptions, ts);
+
+	// There is a bug in TSVFS where if it will throw when a non-existing source-file is requested instead of simply
+	// returning undefined
+	const oldGetSourceFile = vfs.compilerHost.getSourceFile;
+	vfs.compilerHost.getSourceFile = (...args: Parameters<typeof oldGetSourceFile>) => {
+		if (!vfs.compilerHost.fileExists(args[0])) return undefined;
+		return oldGetSourceFile.apply(vfs.compilerHost, args);
+	};
 
 	// Create program
 	const program = ts.createProgram({
 		rootNames: [rootFileName],
 		options: compilerOptions,
-		host: vfs
+		host: vfs.compilerHost
 	});
 	const typechecker = program.getTypeChecker();
 	const rootFile =
