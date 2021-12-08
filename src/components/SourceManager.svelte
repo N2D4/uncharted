@@ -3,8 +3,8 @@
 	import Button from '../components/Button.svelte';
 	import CodeEditor from '../components/CodeEditor.svelte';
 	import { evalTypeScript } from '../utils/ts-compiler';
-	import prettier from 'prettier/standalone';
-	import parserTypeScript from 'prettier/parser-typescript';
+	import prettier from 'prettier/standalone.js';
+	import parserTypeScript from 'prettier/parser-typescript.js';
 	import { v4 as uuidv4 } from 'uuid';
 	import * as ts from 'typescript';
 

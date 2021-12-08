@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { iterablesEqual, throwErr } from '../utils/utils';
-	import Chart from 'chart.js/auto';
+	import { throwErr } from '../utils/utils';
+	import Chart from 'chart.js/auto/auto.js';
+	import type { Chart as ChartT } from 'chart.js';
 	import { onMount } from 'svelte';
 
 	const colors = [
@@ -20,7 +21,7 @@
 	export let data: [number, Map<string, number>][];
 
 	let canvas: HTMLCanvasElement | null = null;
-	let chart: Chart<'line', { x: number; y: number | null }[]> | null = null;
+	let chart: ChartT<'line', { x: number; y: number | null }[]> | null = null;
 
 	$: {
 		if (!chart) break $;
