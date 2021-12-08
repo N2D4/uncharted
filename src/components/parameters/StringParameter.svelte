@@ -12,7 +12,6 @@
 	import { createEventDispatcher } from 'svelte';
 	import { v4 as uuidv4 } from 'uuid';
 	import InlineParameter from './InlineParameter.svelte';
-	import ParameterSeparator from './ParameterSeparator.svelte';
 
 	export let parameter: Parameter;
 	export let initialValue: ParameterValue;
@@ -32,37 +31,15 @@
 <InlineParameter
 	{parameter}
 	{inputId}
-	type="range"
-	showRange={value[0] === 'number-range'}
-	on:changeShowRange={(e) =>
-		setValue(e.detail ? ['number-range', +value[1], +value[1] + 1] : ['literal', value[1]])}
 >
-	{#if value[0] === 'literal'}
-		<input
-			type="number"
-			class="input_field"
-			id={inputId}
-			value={value[1]}
-			on:change={(e) => setValue(['literal', +e.currentTarget.value])}
-		/>
-	{:else if value[0] === 'number-range'}
-		<input
-			type="number"
-			class="input_field"
-			id={inputId}
-			value={value[1]}
-			max={value[2]}
-			on:change={(e) => setValue(['number-range', +e.currentTarget.value, value[2] ?? 0])}
-		/>
-		<ParameterSeparator />
-		<input
-			type="number"
-			class="input_field"
-			min={value[1]}
-			value={value[2]}
-			on:change={(e) => setValue(['number-range', +value[1], +e.currentTarget.value])}
-		/>
-	{/if}
+	<input
+		type="text"
+		class="input_field"
+		placeholder="text value"
+		id={inputId}
+		value={value[1]}
+		on:change={(e) => setValue(['literal', `${e.currentTarget.value}`])}
+	/>
 </InlineParameter>
 
 <style>

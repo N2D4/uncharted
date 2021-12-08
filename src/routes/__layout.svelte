@@ -36,9 +36,18 @@
 		align-items: stretch;
 		gap: 16px;
 		padding: 16px;
+		font-size: 100%;
+
+		-webkit-touch-callout: none;
+		-webkit-user-select: none;
+		-khtml-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
 	}
 
 	.made-by {
+		margin-top: 16px;
 		font-size: 75%;
 		text-align: center;
 	}

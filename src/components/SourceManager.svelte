@@ -51,22 +51,27 @@
 
 		// Wait a little until reporting back for UX reasons (to let the user know something happened)
 		const wait = new Promise(resolve => setTimeout(resolve, 250));
-
-		lastError = null;
-
-		if (autoFormat) onFormat();
-
-		const storedSource = getSource();
+	
 		isCompiling++;
 		try {
-			const result = await evalTypeScript(storedSource, compilerOptions);
-			await wait;
-			dispatch('sourceUpdate', result);
-		} catch (e) {
-			lastError = ["err", e];
-			alert(`An error occured during evaluation! Check the console for more info.\n\n${e}`);
-			console.error(`Error updating source`, e);
-			throw e;
+			// Let the UI do its stuff (most notably greying out the Save button) before doing heavy blocking work
+			await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
+
+			lastError = null;
+
+			if (autoFormat) onFormat();
+
+			const storedSource = getSource();
+			try {
+				const result = await evalTypeScript(storedSource, compilerOptions);
+				await wait;
+				dispatch('sourceUpdate', result);
+			} catch (e) {
+				lastError = ["err", e];
+				alert(`An error occured during evaluation! Check the console for more info.\n\n${e}`);
+				console.error(`Error updating source`, e);
+				throw e;
+			}
 		} finally {
 			isCompiling--;
 		}
@@ -135,5 +140,12 @@
 		font-size: 90%;
 		align-self: center;
 		white-space: pre-wrap;
+
+		-webkit-touch-callout: text;
+		-webkit-user-select: text;
+		-khtml-user-select: text;
+		-moz-user-select: text;
+		-ms-user-select: text;
+		user-select: text;
 	}
 </style>

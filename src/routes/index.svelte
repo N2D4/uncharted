@@ -8,11 +8,17 @@
 	import { onMount } from 'svelte';
 	import Separator from '../components/Separator.svelte';
 	import type { EvalResult } from '../utils/ts-compiler';
-	import ParameterEditor from '../components/ParameterEditor.svelte';
+	import ParameterEditor from '../components/parameters/ParameterEditor.svelte';
 	import { getDefaultValue, Parameter, ParameterValue } from '../utils/parameters';
-	import { getHumanReadableName, throwErr } from '../utils/utils';
+	import { throwErr } from '../utils/utils';
+	import ResultViewer from '../components/result-viewers/ResultViewer.svelte';
+	import exampleSource from '../../static/example-source.ts?raw';
 
-	type Data = Readonly<{ source: string; parameterValues: Record<string, ParameterValue> }>;
+	type Data = Readonly<{
+		source: string;
+		parameterValues: Record<string, ParameterValue>;
+		selectedResultViewer: string;
+	}>;
 	let data: Data | null = null;
 	let dataWriter: ((data: Data) => void) | null = null;
 	$: data && dataWriter && dataWriter(data);
@@ -25,6 +31,7 @@
 	let evalResult: EvalResult | null = null;
 	function onSourceSaved(newEvalResult: EvalResult) {
 		evalResult = newEvalResult;
+		console.log({evalResult});
 
 		if (!data)
 			throwErr(`Data must be initialized before saving the source! (How did this happen?)`);
@@ -56,19 +63,9 @@
 		const localStorageDataKey = '@n2d4/uncharted/v1/data';
 		data = JSON.parse(localStorage.getItem(localStorageDataKey) ?? `{}`);
 		data = {
-			source: `${
-				data?.source ??
-				`
-(x: number, y: number, z: string) => {
-    const xSquared = x ** 2;
-    return {
-        xSquaredHalf: xSquared / 2,
-        complicatedCalculation: xSquared - y * z.length,
-    };
-}
-			`.trim()
-			}`,
-			parameterValues: Object.assign(Object.create(null), data?.parameterValues ?? {})
+			source: `${data?.source ?? exampleSource}`,
+			parameterValues: Object.assign(Object.create(null), data?.parameterValues ?? {}),
+			selectedResultViewer: data?.selectedResultViewer ?? 'chart'
 		};
 		dataWriter = (data) => localStorage.setItem(localStorageDataKey, JSON.stringify(data));
 
@@ -119,12 +116,13 @@
 
 		<h2>Result</h2>
 
-		{#each evalResult.results as result}
-			<div>
-				<h3>{getHumanReadableName(result.name)}</h3>
-				<pre>{JSON.stringify(result)}</pre>
-			</div>
-		{/each}
+		<ResultViewer
+			results={evalResult.results}
+			parameters={getParameterValues(data, evalResult)}
+			resultViewer={data.selectedResultViewer}
+			func={evalResult.function}
+			on:changeResultViewer={(e) => (data &&= { ...data, selectedResultViewer: e.detail })}
+		/>
 	{/if}
 {:else}
 	<div class="loading-container">
@@ -140,6 +138,7 @@
 	h2 {
 		align-self: center;
 		margin: 0;
+		margin-bottom: 8px;
 	}
 
 	.loading-container {

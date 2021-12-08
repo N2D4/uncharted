@@ -5,9 +5,11 @@ import { throwErr } from './utils';
 import { createDefaultMapFromCDN, createSystem, createVirtualCompilerHost } from '@typescript/vfs';
 import lzstring from 'lz-string';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type EvalFunction = (...args: any[]) => Record<string, number>;
+
 export type EvalResult = {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	function: (...args: any[]) => Record<string, number>;
+	function: EvalFunction;
 	parameters: Parameter[];
 	results: Result[];
 };
@@ -16,15 +18,11 @@ export async function evalTypeScript(
 	source: string,
 	compilerOptions: ts.CompilerOptions
 ): Promise<EvalResult> {
-	// Let the UI do its stuff before doing heavy blocking work
-	await new Promise((resolve) => setTimeout(resolve, 0));
-
 	// Create file system
 	const rootFileName = '/main.ts';
 	const files = await createDefaultMapFromCDN(compilerOptions, ts.version, true, ts, lzstring);
 	files.set(rootFileName, source);
 	const vfs = createVirtualCompilerHost(createSystem(files), compilerOptions, ts).compilerHost;
-	console.log({ files, vfs });
 
 	// Create program
 	const program = ts.createProgram({
@@ -54,7 +52,7 @@ export async function evalTypeScript(
 		throwIfDiagnosticsNonEmpty(emitResult.diagnostics);
 		if (!written) throwErr(`Assertion failed: TypeScript compiler didn't write a file`, emitResult);
 	});
-	const evaluatedFunction = new Function(`return ${transpiledJS}`)();
+	const evaluatedFunction = eval.call(globalThis, transpiledJS);
 
 	// Check whether source is a single expression
 	if (rootFile.statements.length !== 1) {
@@ -132,10 +130,22 @@ export async function evalTypeScript(
 function throwIfDiagnosticsNonEmpty(diagnostics: readonly ts.Diagnostic[]) {
 	if (diagnostics.length === 0) return;
 
-	const str = ts.formatDiagnostics(diagnostics, {
+	throwErr(new TSCompilerError(diagnostics), diagnostics);
+}
+
+class TSCompilerError extends Error {
+	constructor(public diagnostics: readonly ts.Diagnostic[]) {
+		super(
+			`${diagnostics.length === 1 ? '' : `Multiple errors\n\n`}${formatDiagnostics(diagnostics)}`
+		);
+		this.name = 'TSCompilerError';
+	}
+}
+
+function formatDiagnostics(diagnostics: readonly ts.Diagnostic[]) {
+	return ts.formatDiagnostics(diagnostics, {
 		getCanonicalFileName: (fileName) => fileName,
 		getCurrentDirectory: () => '.',
 		getNewLine: () => '\n'
 	});
-	throwErr(`TypeScript compile errors\n\n${str}`, diagnostics);
 }

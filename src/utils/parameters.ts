@@ -14,3 +14,16 @@ export function getDefaultValue(parameter: Parameter): ParameterValue {
 		}
 	}
 }
+
+export function isValidValueForParameter(parameter: Parameter, value: ParameterValue): boolean {
+	switch (parameter.type[0]) {
+		case 'number': {
+			return (
+				value[0] === 'number-range' || (value[0] === 'literal' && typeof value[1] === 'number')
+			);
+		}
+		case 'string': {
+			return value[0] === 'literal' && typeof value[1] === 'string';
+		}
+	}
+}
