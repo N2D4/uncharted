@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getHumanReadableName } from '../../utils/utils';
+	import { getHumanReadableName, prettyToString } from '../../utils/utils';
 	import type { Result } from '../../utils/results';
 	import type { Parameter, ParameterValue } from '../../utils/parameters';
 	import type { EvalFunction } from '../../utils/ts-compiler';
@@ -59,10 +59,6 @@
             }        
 		}
 	}
-
-    function prettyToString(x: unknown) {
-        return typeof x === 'number' ? x.toFixed(3) : `${x}`;
-    }
 </script>
 
 <div class="container">

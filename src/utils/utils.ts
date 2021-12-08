@@ -19,3 +19,7 @@ export function getHumanReadableName(identifier: string): string {
 	name = name.replace(/([a-z0-9$])([A-Z])/g, '$1 $2');
 	return name;
 }
+
+export function prettyToString(x: unknown) {
+	return typeof x === 'number' ? x.toFixed(3) : `${x}`;
+}
