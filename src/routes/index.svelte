@@ -29,9 +29,9 @@
 	$: settings && settingsWriter && settingsWriter(settings);
 
 	let evalResult: EvalResult | null = null;
+
 	function onSourceSaved(newEvalResult: EvalResult) {
 		evalResult = newEvalResult;
-		console.log({ evalResult });
 
 		if (!data)
 			throwErr(`Data must be initialized before saving the source! (How did this happen?)`);
@@ -45,13 +45,30 @@
 		data = { ...data, parameterValues };
 	}
 
-	function getParameterValues(data: Data, evalResult: EvalResult) {
-		return new Map(
+	let getParameterValuesCache: [args: any[], result: any] | null = null;
+	function getParameterValues(
+		parameterValues: Record<string, ParameterValue>,
+		evalResult: EvalResult
+	) {
+		// If we've already created a map for these parameter values, use that one so Svelte doesn't propagate an update
+		// (that only works if Svelte's immutable option is true, if not Svelte will still propagate an update)
+		if (
+			getParameterValuesCache &&
+			getParameterValuesCache[0][0] === parameterValues &&
+			getParameterValuesCache[0][1] === evalResult
+		) {
+			return getParameterValuesCache[1];
+		}
+
+		const result = new Map(
 			evalResult.parameters.map((parameter) => {
-				const value = data.parameterValues[parameter.name] ?? getDefaultValue(parameter);
+				const value = parameterValues[parameter.name] ?? getDefaultValue(parameter);
 				return [parameter, value];
 			})
 		);
+
+		getParameterValuesCache = [[parameterValues, evalResult], result];
+		return result;
 	}
 
 	function updateParameterValue(data: Data, parameter: Parameter, value: ParameterValue) {
@@ -110,7 +127,7 @@
 				<h2>Parameters</h2>
 
 				<ParameterEditor
-					parameters={getParameterValues(data, evalResult)}
+					parameters={getParameterValues(data.parameterValues, evalResult)}
 					on:change={(e) => (data &&= updateParameterValue(data, e.detail[0], e.detail[1]))}
 				/>
 			</div>
@@ -118,12 +135,11 @@
 			<Separator />
 
 			<div class="section-container results-section">
-
 				<h2>Result</h2>
 
 				<ResultViewer
 					results={evalResult.results}
-					parameters={getParameterValues(data, evalResult)}
+					parameters={getParameterValues(data.parameterValues, evalResult)}
 					resultViewer={data.selectedResultViewer}
 					func={evalResult.function}
 					on:changeResultViewer={(e) => (data &&= { ...data, selectedResultViewer: e.detail })}
@@ -163,8 +179,13 @@
 	@media only screen and (min-width: 1000px) {
 		.results-section {
 			flex: 1 1 0;
+			min-width: 0;
 		}
-		
+
+		.parameters-section {
+			flex: 0 0 auto;
+		}
+
 		.all-sections {
 			flex-direction: row;
 		}

@@ -4,35 +4,27 @@
 	import type { EvalFunction } from '../../utils/ts-compiler';
 	import ChartCanvas from '../ChartCanvas.svelte';
 	import { getHumanReadableName, throwErr } from '../../utils/utils';
+	import LoadingSpinner from '../LoadingSpinner.svelte';
 
 	export let results: Result[];
 	export let parameters: Map<Parameter, ParameterValue>;
 	export let func: EvalFunction;
 
-	let data:
-		| {
-				error: null;
-				parameter: Parameter;
-				data: [number, Map<string, number>][];
-		  }
-		| {
-				error: string;
-		  } = {
-		error: 'Chart initialization error'
-	};
-	$: data = (() => {
-		// Headers
+	async function getData(results: Result[], parameters: Map<Parameter, ParameterValue>, func: EvalFunction) {
+		// Make sure there's only one range parameter
 		const computeParameters = [...parameters].flatMap(([param, value]) =>
 			value[0] !== 'number-range' ? [] : ([[param, value]] as const)
 		);
 		if (computeParameters.length !== 1)
-			return { error: `Exactly one parameter must be set to range mode` };
+			throwErr(`Exactly one parameter must be set to range mode`);
 		const computeParameter = computeParameters[0][0];
 
+		// Compute range info
 		const range = [computeParameters[0][1][1], computeParameters[0][1][2]];
-		const stepCount = 10;
+		const stepCount = 25;
 		const stepSize = (range[1] - range[0]) / (stepCount - 1);
 
+		// Evaluate data points
 		const data: [number, Map<string, number>][] = [];
 		for (let i = 0; i < stepCount; i++) {
 			const paramVal = range[0] + i * stepSize;
@@ -42,7 +34,7 @@
 					case 'number-range':
 						if (parameter !== computeParameter)
 							throwErr(
-								`Assertion error: There shouldn't be any number-rage parameters at this point`
+								`Assertion error: There shouldn't be any unknown range parameters at this point`
 							);
 						return paramVal;
 					case 'literal':
@@ -53,7 +45,7 @@
 			});
 
 			try {
-				const resultRecord = func(...args);
+				const resultRecord = await func(...args);
 				data.push([
 					paramVal,
 					new Map(
@@ -65,15 +57,17 @@
 			}
 		}
 
-		return { error: null, parameter: computeParameter, data };
-	})();
+		return { parameter: computeParameter, data };
+	}
 </script>
 
-{#if data.error !== null}
-	<div class="error">ERROR: {data.error}</div>
-{:else}
+{#await getData(results, parameters, func)}
+	<LoadingSpinner fadeInAfter={250} />
+{:then data}
 	<ChartCanvas data={data.data} xTitle={getHumanReadableName(data.parameter.name)} />
-{/if}
+{:catch error}
+	<div class="error">{`${error}`}</div>
+{/await}
 
 <style>
 	.error {

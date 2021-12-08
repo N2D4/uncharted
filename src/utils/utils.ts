@@ -23,3 +23,21 @@ export function getHumanReadableName(identifier: string): string {
 export function prettyToString(x: unknown) {
 	return typeof x === 'number' ? x.toFixed(3) : `${x}`;
 }
+
+export function iterablesEqual<T>(
+	iter1: Iterable<T>,
+	iter2: Iterable<T>,
+	comp: (a: T, b: T) => boolean = (a, b) => a === b
+): boolean {
+	const it1 = iter1[Symbol.iterator]();
+	const it2 = iter2[Symbol.iterator]();
+	// eslint-disable-next-line no-constant-condition
+	while (true) {
+		const next1 = it1.next();
+		const next2 = it2.next();
+		console.log({ next1, next2 });
+		if (next1.done !== next2.done) return false;
+		if (next1.done) return true;
+		if (!comp(next1.value, next2.value)) return false;
+	}
+}

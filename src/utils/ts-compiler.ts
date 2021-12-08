@@ -100,9 +100,9 @@ export async function evalTypeScript(
 	});
 
 	// Map results
-	const returnType = callSignatures[0].getReturnType();
+	const returnType = awaitType(typechecker, callSignatures[0].getReturnType());
 	if (returnType.getFlags() !== ts.TypeFlags.Object) {
-		throwErr(`Return type must be a plain object.`, { returnType });
+		throwErr(`Return type must be a plain object or Promise of a plain object.`, { returnType });
 	}
 	const functionResults = returnType.getProperties();
 	const results: Result[] = functionResults.map((result) => {
@@ -125,6 +125,19 @@ export async function evalTypeScript(
 		parameters,
 		results
 	};
+}
+
+function awaitType(typechecker: ts.TypeChecker, type: ts.Type): ts.Type {
+	if (type.getSymbol()?.getName() !== 'Promise') return type;
+	if (!(type.getFlags() & ts.TypeFlags.Object)) return type;
+
+	const object = type as ts.ObjectType;
+	if (object.objectFlags !== ts.ObjectFlags.Reference) return type;
+
+	const typeArg = typechecker.getTypeArguments(object as ts.TypeReference)?.[0];
+	if (!typeArg) return type;
+
+	return typeArg;
 }
 
 function throwIfDiagnosticsNonEmpty(diagnostics: readonly ts.Diagnostic[]) {

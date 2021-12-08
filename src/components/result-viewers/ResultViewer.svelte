@@ -1,10 +1,12 @@
+<svelte:options immutable={true}/>
+
 <script lang="ts">
 	import type { Result } from '../../utils/results';
 	import TableResultViewer from './TableResultViewer.svelte';
 	import { createEventDispatcher } from 'svelte';
 	import type { Parameter, ParameterValue } from '../../utils/parameters';
     import type { EvalFunction } from '../../utils/ts-compiler';
-import ChartResultViewer from './ChartResultViewer.svelte';
+    import ChartResultViewer from './ChartResultViewer.svelte';
 
 	export let results: Result[];
 	export let parameters: Map<Parameter, ParameterValue>;

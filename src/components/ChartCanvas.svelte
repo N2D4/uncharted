@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { prettyToString, throwErr } from '../utils/utils';
+	import { iterablesEqual, throwErr } from '../utils/utils';
 	import Chart from 'chart.js/auto';
 	import { onMount } from 'svelte';
 
@@ -61,8 +61,8 @@
 						beginAtZero: true
 					}
 				},
-				maintainAspectRatio: false,
-			},
+				maintainAspectRatio: false
+			}
 		});
 	});
 </script>
